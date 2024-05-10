@@ -1,6 +1,6 @@
 import scenic
 from scenic.simulators.newtonian import NewtonianSimulator
-scenario = scenic.scenarioFromFile('Scenic/examples/driving/badlyParkedCarPullingIn.scenic',
+scenario = scenic.scenarioFromFile('../examples/driving/badlyParkedCarPullingIn.scenic',
                                    model='scenic.simulators.newtonian.driving_model',
                                    mode2D=True)
 scene, _ = scenario.generate()
