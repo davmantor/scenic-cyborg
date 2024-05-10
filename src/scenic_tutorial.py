@@ -1,4 +1,5 @@
 import scenic
+import cyborg
 from scenic.simulators.newtonian import NewtonianSimulator
 scenario = scenic.scenarioFromFile('../examples/driving/badlyParkedCarPullingIn.scenic',
                                    model='scenic.simulators.newtonian.driving_model',
