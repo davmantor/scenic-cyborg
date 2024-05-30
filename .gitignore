@@ -140,3 +140,4 @@ dmypy.json
 # generated parser
 src/scenic/syntax/parser.py
 /.idea
+/.idea
