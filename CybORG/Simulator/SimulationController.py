@@ -4,9 +4,11 @@ import inspect
 from ipaddress import IPv4Network
 from math import log2
 from random import sample, choice
+from typing import Union
 import yaml
 
 from CybORG import CybORG
+from CybORG.Shared import Scenario
 from CybORG.Shared.Actions import FindFlag, ShellSleep, SambaUsermapScript, UpgradeToMeterpreter, MSFEternalBlue, GetShell, \
     PingSweep
 from CybORG.Shared.Actions.Action import Action
@@ -24,7 +26,7 @@ class SimulationController(EnvironmentController):
     Most methods are either disabled or delegate their functionality to the State attribute.
     The main thing this class currently does is parse the scenario file.
     """
-    def __init__(self, scenario_filepath: str = None, scenario_mod: dict = None, agents: dict = None, verbose=True):
+    def __init__(self, scenario_filepath: Union[str, Scenario] = None, scenario_mod: dict = None, agents: dict = None, verbose=True):
         self.state = None
         super().__init__(scenario_filepath, scenario_mod=scenario_mod, agents=agents)
 

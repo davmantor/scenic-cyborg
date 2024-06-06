@@ -2,6 +2,7 @@
 ## Additionally, we waive copyright and related rights in the utilized code worldwide through the CC0 1.0 Universal public domain dedication.
 
 import sys
+from typing import Union
 import yaml
 
 from CybORG.Shared import Scenario
@@ -30,7 +31,7 @@ class EnvironmentController:
         agent interface object for agents in scenario
     """
 
-    def __init__(self, scenario_path: str, scenario_mod: dict = None, agents: dict = None):
+    def __init__(self, scenario_path: Union[str, Scenario], scenario_mod: dict = None, agents: dict = None):
         """Instantiates the Environment Controller.
         Parameters
         ----------
@@ -44,8 +45,11 @@ class EnvironmentController:
         self.hostname_ip_map = None
         self.subnet_cidr_map = None
         # self.scenario_dict = self._parse_scenario(scenario_path, scenario_mod=scenario_mod)
-        scenario_dict = self._parse_scenario(scenario_path)
-        self.scenario = Scenario(scenario_dict)
+        if isinstance(scenario_path, Scenario):
+            self.scenario = scenario_path
+        else:
+            scenario_dict = self._parse_scenario(scenario_path)
+            self.scenario = Scenario(scenario_dict)
         self._create_environment()
         self.agent_interfaces = self._create_agents(agents)
         self.reward = {}
@@ -405,9 +409,3 @@ class EnvironmentController:
 
     def get_reward_breakdown(self, agent:str):
         return self.agent_interfaces[agent].reward_calculator.host_scores
-
-        
-
-
-
-
