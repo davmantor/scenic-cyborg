@@ -5,6 +5,7 @@ from CybORG.Simulator.Entity import Entity
 from CybORG.Simulator.Host import Host
 from CybORG.Simulator.SimulationController import SimulationController
 from scenic.core.object_types import Object
+from .enums import *
 
 class CybORGObject(Object):
     def __init__(self, cyborg_name: str, *args, **kwargs):
@@ -55,18 +56,24 @@ CybORGSession = namedtuple("CybORGSession", ("username", "hostname", "type", "na
 # There's technically nothing stopping us from having other agents that have multiple host sessions
 # but in practice only blue will use that feature
 class CybORGAgent(CybORGObject):
-    def __init__(self, cyborg_name: str, session: CybORGSession, *args, **kwargs):
+    def __init__(self, cyborg_name: str, session: CybORGSession, agent_type: AgentType, reward: RewardCalculator, # initial_access: dict[CybORGHost, InitialAccessLevel],
+            subnets: list[CybORGSubnet], actions: list[RedActions | GreenActions | BlueActions], *args, **kwargs):
         super().__init__(cyborg_name, *args, allowCollisions = False, **kwargs)
         self.session = session
+        self.agent_type = agent_type
+        self.actions = actions
+        self.reward = reward
+        self.subnets = subnets
+        # self.initial_access = initial_access
 
     def get_cyborg_obj(self, sim: SimulationController) -> Entity:
         return sim.agent_interfaces[self.cyborg_name]
 
-# TODO might be handy to either have a shortcut for making a green agent that can access all systems
-# or a thing to make one green agent for each "user" host
+class CybORGGreenAgent(CybORGAgent):
+    def __init__(self, *args, **kwargs):
+        super().__init__("Green", None, AgentType.GREEN_AGENT, RewardCalculator.NONE, *args, subnets=None, actions=GreenActions._member_names_, **kwargs)
 
 class CybORGEgoAgent(CybORGAgent):
-    # TODO artifacts should probably not be empty
-    def __init__(self, artifacts: list[str] = [], *args, **kwargs):
-        super().__init__("Blue", None, *args, **kwargs)
+    def __init__(self, artifacts: list[Artifacts] = [], *args, **kwargs):
+        super().__init__("Blue", None, *args, subnets = None, **kwargs)
         self.artifacts = artifacts

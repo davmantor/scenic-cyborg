@@ -35,6 +35,6 @@ class ActionWrapper(Action):
         self.action_args = kwargs
 
     def applyTo(self, agent, simulation: CybORGSimulation):
-        # TODO scenic agent to cyborg agent
-        # self.action_args["agent"] = agent
+        # FIXME scenic agents may be separate from our objects? docs are not clear
+        self.action_args["agent"] = agent.cyborg_name
         simulation.queue_action(self.action_cls(**self.action_args))
