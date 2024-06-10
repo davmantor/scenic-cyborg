@@ -13,7 +13,7 @@
 from typing import Type
 from scenic.core.simulators import Action
 from CybORG.Shared.Actions import Action as CyAction
-from . import CybORGSimulation
+from .simulator import CybORGSimulation
 
 # While there is some variance in how actions are constructed, especially those not used in CAGE
 # the set of basic abstract actions (plus a few specific red ones) seem be be faily consistent

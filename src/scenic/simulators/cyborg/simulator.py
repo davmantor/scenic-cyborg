@@ -5,9 +5,8 @@ from CybORG.Simulator.SimulationController import SimulationController
 from collections import defaultdict
 from scenic.core.scenarios import Scene
 from scenic.core.simulators import Simulation, Simulator
-from .enums import InitialAccessLevel
-from scenic.simulators.cyborg.objects import CybORGSubnet, CybORGHost, CybORGAgent, CybORGEgoAgent, CybORGGreenAgent
-from . import CybORGObject
+from .enums import InitialAccessLevel, BlueActions
+from scenic.simulators.cyborg.objects import CybORGSubnet, CybORGHost, CybORGAgent, CybORGEgoAgent, CybORGGreenAgent, CybORGObject
 
 class CybORGSimulator(Simulator):
     def __init__(self):
@@ -19,18 +18,24 @@ class CybORGSimulator(Simulator):
 
     def _scene_to_scenario(self, scene: Scene) -> Scenario:
         sc: dict[str, dict[str, Any]] = {"Agents": {}, "Subnets": {}, "Hosts": {"Defender": {"image": "Velociraptor_Server"}}}
-        # FIXME this should not depend on object order
-        # also maybe calculate subnet size *after* everything gets added to it
         host_to_subnet: dict[str, str] = {}
         subnets: list[CybORGSubnet] = []
         hosts: list[CybORGHost] = []
         agents: list[CybORGAgent] = []
         for obj in scene.objects:
+            if isinstance(obj, CybORGObject):
+                assert obj.cyborg_name
             if isinstance(obj, CybORGSubnet):
                 subnets.append(obj)
             elif isinstance(obj, CybORGHost):
+                assert obj.image
+                if obj.confidentiality is None:
+                    obj.confidentiality = obj.subnet.image_map[obj.image][0]
+                if obj.availability is None:
+                    obj.availability = obj.subnet.image_map[obj.image][1]
                 hosts.append(obj)
             elif isinstance(obj, CybORGAgent):
+                assert obj.actions and BlueActions.SLEEP in obj.actions
                 agents.append(obj)
 
         for obj in subnets:
@@ -43,11 +48,7 @@ class CybORGSimulator(Simulator):
 
         for obj in hosts:
             assert obj.cyborg_name not in sc["Hosts"]
-            hostData = {"image": obj.image, "info": {obj.cyborg_name: {"Interfaces": "All"}}}
-            if obj.confidentiality:
-                hostData["Confidentiality"] = obj.confidentiality
-            if obj.availability:
-                hostData["Availability"] = obj.availability
+            hostData = {"image": obj.image, "info": {obj.cyborg_name: {"Interfaces": "All"}}, "Confidentiality": obj.confidentiality, "Availability": obj.availability}
             # info is a dict mapping hostnames to a level of info that red acquires on compromising a host
             # 'All' means red gets access to the host, while 'IP Address' just means that red becomes aware of the host without needing to scan
             # This is used for lateral movement, so for every subnet that the red agent does not start in
@@ -61,18 +62,10 @@ class CybORGSimulator(Simulator):
             host_to_subnet[obj.cyborg_name] = obj.subnet.cyborg_name
 
         for obj in agents:
-            # TODO double triple check that these are strings and not instances of the classes themselves
             assert obj.cyborg_name not in sc["Agents"]
-            agentData = {"agent_type": obj.agent_type, "Actions": list(obj.actions), "wrappers": [], "starting_sessions": [],
+            agentData = {"agent_type": obj.agent_type, "Actions": obj.actions, "wrappers": [], "starting_sessions": [],
                             "reward_calculator_type": obj.reward, "INT": {"Hosts": {}}, "AllowedSubnets": [x.cyborg_name for x in obj.subnets]}
             assert all(map(lambda x: x in sc["Subnets"].keys(), agentData["AllowedSubnets"]))
-            assert "Sleep" in agentData["Actions"]
-            # XXX initial access should probably be managed by specific subclasses? remove this once a decision is made
-            # for k, v in obj.initial_access:
-            #     if v == InitialAccessLevel.IP:
-            #         agentData["INT"]["Hosts"][k] = {"Interfaces": "All"}
-            #     elif v == InitialAccessLevel.ALL:
-            #         agentData["INT"]["Hosts"][k] = {"Interfaces": "All", "System info": "All"}
             if isinstance(obj, CybORGEgoAgent):
                 # First generate session for defender
                 agentData["starting_sessions"].append({"name": "VeloServer", "username": "ubuntu", "type": "VelociraptorServer", "hostname": "Defender", "artifacts": obj.artifacts})
@@ -80,7 +73,7 @@ class CybORGSimulator(Simulator):
                 for host, d in sc["Hosts"]:
                     # We need a client session on the defender if it is part of the network
                     if host != "Attacker":
-                        agentData["starting_sessions"].append({"name": "Velo_" + host, "username": "SYSTEM" if d["image"].lower().startswity("win") else "ubuntu", "type": "VelociraptorClient", "hostname": host, "parent": "VeloServer"})
+                        agentData["starting_sessions"].append({"name": "Velo_" + host, "username": "SYSTEM" if d["image"].lower().startswith("win") else "ubuntu", "type": "VelociraptorClient", "hostname": host, "parent": "VeloServer"})
                         agentData["INT"]["Hosts"][host] = {"User info": "All", "System info": "All", "Interfaces": "All"}
                 agentData["AllowedSubnets"] = list(sc["Subnets"].keys())
             elif isinstance(obj, CybORGGreenAgent):
@@ -91,6 +84,7 @@ class CybORGSimulator(Simulator):
                         agentData["INT"]["Hosts"][host] = {"User info": "All", "System info": "All", "Interfaces": "All"}
                 agentData["AllowedSubnets"] = list(sc["Subnets"].keys())
             else:
+                assert obj.session
                 # Turn session tuple into the real deal
                 agentData["starting_sessions"].append(obj.session._asdict())
                 agentData["AllowedSubnets"].append(host_to_subnet[obj.session.hostname])
@@ -122,8 +116,6 @@ class CybORGSimulation(Simulation):
         for v in self.actions:
             self.controller.execute_action(v)
         self.actions.clear()
-        # TODO determine done? cyborg does not have a termination rule by default
-        # how do we even signal up? unclear what class 'dynamic_scenario' is
         self.controller.step()
 
     def createObjectInSimulator(self, obj):

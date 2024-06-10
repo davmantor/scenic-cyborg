@@ -13,14 +13,14 @@ class Images(StrEnum):
     OP_SERVER = "OP_Server"
 
 class AgentType(StrEnum):
-    B_LINE = "B_Line"
-    BLUE_MONITOR_AGENT = "BlueMonitorAgent"
-    BLUE_REACT_AGENT = "BlueReactAgent"
-    COUNTER_KILLCHAIN_AGENT = "CounterKillchainAgent"
-    GREEN_AGENT = "GreenAgent"
-    KILLCHAIN_AGENT = "KillchainAgent"
+    BEELINE = "B_Line"
+    BLUE_MONITOR = "BlueMonitorAgent"
+    BLUE_REACT = "BlueReactAgent"
+    COUNTER_KILLCHAIN = "CounterKillchainAgent"
+    GREEN = "GreenAgent"
+    KILLCHAIN = "KillchainAgent"
     MEANDER = "Meander"
-    SLEEP_AGENT = "SleepAgent"
+    SLEEP = "SleepAgent"
 
 class BlueActions(StrEnum):
     ANALYSE = "Analyse"
@@ -67,3 +67,11 @@ class InitialAccessLevel(Enum):
     NONE = auto()
     IP = auto()
     ALL = auto()
+
+class Availability(StrEnum):
+    NONE = 'None'
+    LOW = 'Low'
+    MED = 'Medium'
+    HI = 'High'
+
+Confidentiality = Availability
