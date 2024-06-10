@@ -17,7 +17,7 @@ class CybORGSimulator(Simulator):
         return CybORGSimulation(scene, SimulationController(scenario), **kwargs)
 
     def _scene_to_scenario(self, scene: Scene) -> Scenario:
-        sc: dict[str, dict[str, Any]] = {"Agents": {}, "Subnets": {}, "Hosts": {"Defender": {"image": "Velociraptor_Server"}}}
+        sc: dict[str, dict[str, Any]] = {"Agents": {}, "Subnets": {}, "Hosts": {}}
         host_to_subnet: dict[str, str] = {}
         subnets: list[CybORGSubnet] = []
         hosts: list[CybORGHost] = []

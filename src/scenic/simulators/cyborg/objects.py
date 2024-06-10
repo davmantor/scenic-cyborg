@@ -37,7 +37,7 @@ class CybORGHost(CybORGObject):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.subnet: CybORGSubnet = None
-        self.image: str = None
+        self.image: Image = None
         self.confidentiality: Optional[Confidentiality] = None
         self.availability: Optional[Availability] = None
         self.linked_hosts: list[str] = []
@@ -58,8 +58,6 @@ class CybORGAgent(CybORGObject):
         self.actions: list[RedActions | GreenActions | BlueActions] = [BlueActions.SLEEP]
         self.reward: RewardCalculator = RewardCalculator.NONE
         self.subnets: list[CybORGSubnet] = []
-        # ???
-        # self.allowCollisions = False
 
     def get_cyborg_obj(self, sim: SimulationController) -> Entity:
         return sim.agent_interfaces[self.cyborg_name]

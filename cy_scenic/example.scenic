@@ -1,5 +1,6 @@
 model scenic.simulators.cyborg.model
 
-from scenic.simulators.cyborg import CybORGEgoAgent, AgentType, RewardCalculator, BlueActions
+from scenic.simulators.cyborg import AgentType, RewardCalculator, BlueActions
 
-ego = new EgoAgent
+# Should this be in the world model?
+ego = new EgoAgent above hostDefender by 0

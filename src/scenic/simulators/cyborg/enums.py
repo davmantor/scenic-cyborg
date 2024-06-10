@@ -1,10 +1,10 @@
 from enum import Enum, StrEnum, auto
 
-class Images(StrEnum):
+class Image(StrEnum):
     KALI_BOX = "Kali_Box"
     INTERNAL = "Internal"
     GATEWAY = "Gateway"
-    VELOCIRATOR_SERVER = "Velociraptor_Server"
+    VELOCIRAPTOR_SERVER = "Velociraptor_Server"
     LINUX_USER_HOST1 = "linux_user_host1"
     LINUX_USER_HOST2 = "linux_user_host2"
     LINUX_DECOY_HOST1 = "linux_decoy_host"
