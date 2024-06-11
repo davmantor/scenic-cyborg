@@ -1,4 +1,5 @@
 from enum import Enum, StrEnum, auto
+from typing import Optional
 
 class Image(StrEnum):
     KALI_BOX = "Kali_Box"
@@ -68,10 +69,24 @@ class InitialAccessLevel(Enum):
     IP = auto()
     ALL = auto()
 
-class Availability(StrEnum):
+class Confidentiality(StrEnum):
     NONE = 'None'
     LOW = 'Low'
     MED = 'Medium'
     HI = 'High'
 
-Confidentiality = Availability
+Availability = Confidentiality
+
+# Maps types to sets of possible images
+class SubnetKind(Enum):
+    # Gateway is defined so that we can use it as a valid target for green sessions; there should not be one in the user network
+    USER = {Image.LINUX_USER_HOST1: 0.15, Image.LINUX_USER_HOST2: 0.15, Image.WINDOWS_USER_HOST1: 0.35, Image.WINDOWS_USER_HOST2: 0.35, Image.GATEWAY: 0}, None, 5
+    ENTERPRISE = {Image.INTERNAL: 1}, Image.GATEWAY, 4
+    OPER = {Image.OP_SERVER: 1}, Image.GATEWAY, 6
+    # DECOY = {Image.LINUX_DECOY_HOST1: 1}, Image.GATEWAY, 4
+
+    def __init__(self, images: dict[Image, float], makeOne: Optional[Image], sz: int):
+        self._value = self.name.capitalize()
+        self.images = images
+        self.makeOne = makeOne
+        self.size = sz
