@@ -78,10 +78,9 @@ class CybORGSimulator(Simulator):
             sc["Hosts"][obj.p2.name]["info"][obj.p1.name] = {"Interfaces": "IP Address"}
             # TODO should we also fixup NACLs here?
 
-        # BUG AGENTS ARE NOT BEING CREATED!!!!
         for obj in agents:
             assert obj.name not in sc["Agents"]
-            agentData = {"agent_type": obj.agent_type, "Actions": obj.actions, "wrappers": [], "starting_sessions": [],
+            agentData = {"agent_type": obj.agent_type, "actions": obj.actions, "wrappers": [], "starting_sessions": [],
                             "reward_calculator_type": obj.reward, "INT": {"Hosts": {}}, "AllowedSubnets": [x.name for x in obj.subnets]}
             assert all(map(lambda x: x in sc["Subnets"].keys(), agentData["AllowedSubnets"]))
             if isinstance(obj, CybORGEgoAgent):
@@ -106,6 +105,7 @@ class CybORGSimulator(Simulator):
                 agentData["starting_sessions"].append(obj.session._asdict())
                 agentData["AllowedSubnets"].append(host_to_subnet[obj.session.hostname])
                 agentData["INT"]["Hosts"][obj.session.hostname] = {"System info": "All", "Interfaces": "All"}
+            sc["Agents"][obj.name] = agentData
 
         for x in sc["Subnets"].values():
             x["Size"] = len(x["Hosts"])
@@ -115,7 +115,6 @@ class CybORGSimulator(Simulator):
 class CybORGSimulation(Simulation):
     def __init__(self, scene, controller: SimulationController, **kwargs):
         self.controller = controller
-        self.actions = []
         super().__init__(scene, **kwargs)
 
     def setup(self):
@@ -123,16 +122,16 @@ class CybORGSimulation(Simulation):
         self.controller.reset()
 
     def queue_action(self, agent, action):
-        # good thing the agent is stored in the wrapped action :)
-        self.actions.append(action)
+        # ffs do not call this twice in a behavior
+        # goodbye marl support i guess
+        self.controller.step("Blue", action)
 
     def step(self):
-        for v in self.actions:
-            self.controller.execute_action(v)
-        self.actions.clear()
-        self.controller.step()
         # TODO return some kind of state (maybe blue's obs will do...)
-        # return self.controller.get_last_observation("Blue")
+        print(self.controller.get_last_observation("Blue"))
+        # TODO: i thought this would be appended to the trajectory but it's not
+        # try to override that if possible
+        return self.controller.get_last_observation("Blue")
 
     def createObjectInSimulator(self, obj):
         pass
@@ -145,3 +144,4 @@ class CybORGSimulation(Simulation):
 
         # TODO: what should go here?
         # may be useful to put color changes for visualizing and stuff...
+        # very much a time crunch thing though

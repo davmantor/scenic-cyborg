@@ -8,4 +8,5 @@ simulation = simulator.simulate(scene, maxSteps=10)
 if simulation:  # `simulate` can return None if simulation fails
     result = simulation.result
     for i, state in enumerate(result.trajectory):
-            print(f'Time step {i}: {state}')
+            # print(f'Time step {i}: {state}')
+            pass
