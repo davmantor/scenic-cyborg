@@ -97,7 +97,6 @@ class CybORGEgoAgent(CybORGAgent):
             properties["artifacts"] = []
         super().__init__(properties, *args, **kwargs)
 
-# TODO this should be a line from p1's position to p2's position
 class CybORGLink(Object):
     def __init__(self, properties, *args, **kwargs):
         assert "p1" in properties

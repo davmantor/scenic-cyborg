@@ -1,12 +1,14 @@
 simulator CybORGSimulator
 
+import itertools
+
 from scenic.simulators.cyborg.objects import *
 from scenic.simulators.cyborg.enums import Image, SubnetKind
 
 # FIXME why is this clipping into hosts?
 class Subnet(CybORGSubnet):
-    width: 16
-    length: 16
+    width: 12
+    length: 12
     height: 0.004
     allowCollisions: True
     shape: CylinderShape()
@@ -19,9 +21,7 @@ class Host(CybORGHost):
     shape: BoxShape()
     color: (0.25, 0.25, 0.25)
     position: new Point on self.subnet.region
-    # TODO apparently arranging a few hosts so they don't intersect is too fucking hard for scenic
-    # i don't want to deal with this
-    # probably precalc circle or something, reuse code from vbird if i can
+    # TODO precalc circle or something, reuse code from vbird if i can
     allowCollisions: True
 
 class Agent(CybORGAgent):
@@ -55,11 +55,11 @@ class EgoAgent(CybORGEgoAgent):
 
 _subnets = []
 # TODO write more or (better) make a generator
-# assuming a radius of 3, leave a distance of 2 between each circle
-_subnetPos = ((0, 0, 0), (-18, -18, 0), (-18, 18, 0), (18, 18, 0), (18, -18, 0))
+# assuming a radius of 4, leave a distance of 2 between each circle
+_subnetPos = ((0, 0, 0), (-14, -14, 0), (-14, 14, 0), (14, 14, 0), (14, -14, 0))
 def genSubnet(kind: SubnetKind):
     obj = new Subnet with name str(kind.name) + str(len(_subnets)),
-            with region CircularRegion(_subnetPos[len(_subnets)], 3),
+            with region CircularRegion(_subnetPos[len(_subnets)], 6),
             with kind kind,
             at _subnetPos[len(_subnets)]
             # TODO image map, likely defined as part of kind
@@ -89,42 +89,18 @@ class Link(CybORGLink):
     color: (0.75, 0, 0)
     width: 0.1
     height: 0.004
-    length: 1 # abs(self.p1.position.distanceTo(self.p1.position))
 
-# FIXME well this is fucking broken alright
-# remove the crap i wrote before the return later
 def genLinks():
-    for i, p1 in enumerate(_subnets):
-        if i == len(_subnets) - 1:
-            break
-        p2 = _subnets[i + 1]
-        if True or p1[0].kind.makeOne:
+    tolink = _subnets.copy()
+    while len(tolink) > 1:
+        p1 = tolink[-1]
+        del tolink[-1]
+        p2 = Uniform(*tuple(itertools.chain.from_iterable(map(lambda x: (x[1][0],) if x[0].kind.makeOne else x[1], tolink))))
+        if p1[0].kind.makeOne:
             p1 = p1[1][0]
         else:
             p1 = Uniform(*tuple(p1[1]))
-            pass
-        if True or p2[0].kind.makeOne:
-            p2 = p2[1][0]
-        else:
-            pass
-            p2 = Uniform(*tuple(p2[1]))
-        new Link at p1, facing directly toward p2, with p1 p1, with p2 p2
-    return
-    # tolink = set(range(len(_subnets)))
-    # while len(tolink) > 1:
-    #     # Will using this here blow up generation?
-    #     p1 = Uniform(tolink)
-    #     tolink.remove(p1)
-    #     p2 = Uniform(tolink)
-    #     if _subnets[p1][0].kind.makeOne:
-    #         p1 = _subnets[p1][1][0]
-    #     else:
-    #         p1 = Uniform(*tuple(_subnets[p1][1]))
-    #     if _subnets[p2][0].kind.makeOne:
-    #         p2 = _subnets[p2][1][0]
-    #     else:
-    #         p2 = Uniform(*tuple(_subnets[p2][1]))
-    #     new Link at p1, facing directly toward p2
+        new Link at p1 offset along angle from p1 to p2 by (0, (distance from p1 to p2) / 2, 0), facing directly toward p2, with p1 p1, with p2 p2, with length distance from p1 to p2
 
 def genAgents(behave):
     greenAgent = new GreenAgent
