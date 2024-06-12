@@ -1,17 +1,21 @@
 from enum import Enum, StrEnum, auto
 from typing import Optional
 
-class Image(StrEnum):
-    KALI_BOX = "Kali_Box"
-    INTERNAL = "Internal"
-    GATEWAY = "Gateway"
-    VELOCIRAPTOR_SERVER = "Velociraptor_Server"
-    LINUX_USER_HOST1 = "linux_user_host1"
-    LINUX_USER_HOST2 = "linux_user_host2"
-    LINUX_DECOY_HOST1 = "linux_decoy_host"
-    WINDOWS_USER_HOST1 = "windows_user_host1"
-    WINDOWS_USER_HOST2 = "windows_user_host2"
-    OP_SERVER = "OP_Server"
+class Image(Enum):
+    KALI_BOX = "Kali_Box", (0.9, 0.05, 0.05), "root"
+    INTERNAL = "Internal", (0.1, 0.1, 0.1), "SYSTEM"
+    GATEWAY = "Gateway", (0.25, 0.6, 0.25), "root"
+    VELOCIRAPTOR_SERVER = "Velociraptor_Server", (0.05, 0.25, 0.8), "root"
+    LINUX_USER_HOST1 = "linux_user_host1", (0, 0.9, 0.15), "root"
+    LINUX_USER_HOST2 = "linux_user_host2", (0, 0.9, 0.15), "root"
+    LINUX_DECOY_HOST1 = "linux_decoy_host",  (0.6, 0.25, 0.25), "root"
+    WINDOWS_USER_HOST1 = "windows_user_host1", (0.05, 0.75, 0.05), "SYSTEM"
+    WINDOWS_USER_HOST2 = "windows_user_host2", (0.05, 0.75, 0.05), "SYSTEM"
+    OP_SERVER = "OP_Server", (0.25, 0.25, 0.25), "root"
+
+    def __init__(self, value: str, color: tuple[int], username: str):
+        self.color = color
+        self.username = username
 
 class AgentType(StrEnum):
     BEELINE = "B_Line"
@@ -34,8 +38,9 @@ class BlueActions(StrEnum):
 class RedActions(StrEnum):
     DISCOVER_NETWORK_SERVICES = "DiscoverNetworkServices"
     DISCOVER_REMOTE_SERVICES = "DiscoverRemoteServices"
-    IMPACT = "Impact"
+    EXPLOIT_REMOTE_SERVICE = "ExploitRemoteService"
     PRIVILEDGE_ESCALATE = "PrivledgeEscalate"
+    IMPACT = "Impact"
     SLEEP = "Sleep"
 
 class GreenActions(StrEnum):
@@ -60,7 +65,7 @@ class RewardCalculator(StrEnum):
     AVAILABILITY = "AvailabilityRewardCalculator"
     BASELINE = "BaselineRewardCalculator"
     HYBRID_BLUE = "HybridAvailabilityConfidentialityRewardCalculator"
-    PWM = "PwnRewardCalculator"
+    PWN = "PwnRewardCalculator"
     DISRUPT = "DistruptRewardCalculator"
     HYBRID_RED = "HybridImpactPwnRewardCalculator"
 

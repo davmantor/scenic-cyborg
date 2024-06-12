@@ -10,6 +10,7 @@
 # I'm going to assume that green agents will *not* be handled by Scenic.
 # We could randomize action probabilities, but randomizing red agent state transitions takes priority
 
+import math
 from typing import Type
 from scenic.core.simulators import Action
 from CybORG.Shared.Actions import Action as CyAction
@@ -39,3 +40,19 @@ class ActionWrapper(Action):
         if "agent" in self.action_args:
             self.action_args["agent"] = agent.cyborg_name
         simulation.queue_action(agent, self.action_cls(**self.action_args))
+
+# This is here so that this file is less lonely
+# Casually stolen from myself at https://github.com/jlortiz0/VBird/blob/master/backend/Circle.py
+def calcPoints(count, diameter):
+    radBetw = math.tau/count
+    final = []
+    for x in range(count):
+        i = x*radBetw
+        final.append([math.cos(i)*diameter, math.sin(i)*diameter])
+    # Reduce fp error (is this needed anymore?)
+    for i, x in enumerate(final):
+        if math.isclose(x[0], round(x[0])):
+            final[i][0] = round(x[0])
+        if math.isclose(x[1], round(x[1])):
+            final[i][1] = round(x[1])
+    return final

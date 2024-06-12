@@ -107,7 +107,7 @@ class CybORGSimulator(Simulator):
                 for host, d in sc["Hosts"].items():
                     # We need a client session on the defender if it is part of the network
                     if host != "Attacker":
-                        agentData["starting_sessions"].append({"name": "Velo_" + host, "username": "SYSTEM" if d["image"].lower().startswith("win") else "ubuntu", "type": "VelociraptorClient", "hostname": host, "parent": "VeloServer"})
+                        agentData["starting_sessions"].append({"name": "Velo_" + host, "username": d["image"].username, "type": "VelociraptorClient", "hostname": host, "parent": "VeloServer"})
                         agentData["INT"]["Hosts"][host] = {"User info": "All", "System info": "All", "Interfaces": "All"}
                 # agentData["AllowedSubnets"] = list(sc["Subnets"].keys())
             elif isinstance(obj, CybORGGreenAgent):
@@ -119,6 +119,8 @@ class CybORGSimulator(Simulator):
             else:
                 assert obj.session
                 # Turn session tuple into the real deal
+                obj.session["username"] = obj.session["host"].image.username
+                obj.session["host"] = obj.session["host"].name
                 agentData["starting_sessions"].append(obj.session._asdict())
                 # agentData["AllowedSubnets"].append(host_to_subnet[obj.session.hostname])
                 agentData["INT"]["Hosts"][obj.session.hostname] = {"System info": "All", "Interfaces": "All"}
@@ -154,6 +156,9 @@ class CybORGSimulation(Simulation):
         # Don't think we actually need anything here
         # scene to scenario should handle object linking
 
+    def agent_obs(self, agent):
+        return self.controller.get_last_observation(agent.name)
+
     def getProperties(self, obj, properties):
         if True or not isinstance(obj, CybORGObject):
             return {prop: getattr(obj, prop) for prop in properties}
@@ -161,3 +166,4 @@ class CybORGSimulation(Simulation):
         # TODO: what should go here?
         # may be useful to put color changes for visualizing and stuff...
         # very much a time crunch thing though
+        # Blue can access its state with the function already, so we might not need anything

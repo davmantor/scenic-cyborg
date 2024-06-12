@@ -3,31 +3,29 @@ simulator CybORGSimulator
 import itertools
 
 from scenic.simulators.cyborg.objects import *
-from scenic.simulators.cyborg.enums import Image, SubnetKind
+from scenic.simulators.cyborg.actions import calcPoints
+from scenic.simulators.cyborg.enums import Image, SubnetKind, Confidentiality, Availability
 
-# FIXME why is this clipping into hosts?
 class Subnet(CybORGSubnet):
     width: 12
     length: 12
     height: 0.004
     allowCollisions: True
     shape: CylinderShape()
-    color: (0.75, 0.75, 0.75)
+    color: (0.25, 0.5, 0.1) if self.kind == SubnetKind.USER else (0.75, 0.75, 0.75)
 
 class Host(CybORGHost):
     width: 0.75
     length: 0.75
     height: 1.5
     shape: BoxShape()
-    color: (0.25, 0.25, 0.25)
-    position: new Point on self.subnet.region
-    # TODO precalc circle or something, reuse code from vbird if i can
-    allowCollisions: True
+    color: self.image.color
 
 class Agent(CybORGAgent):
     width: 0.5
     length: 0.5
     height: 0.004
+    # "above" puts this inside, but EgoAgent on top? I don't get it...
     shape: CylinderShape()
     allowCollisions: True
     color: (1, 0, 0)
@@ -59,28 +57,35 @@ _subnets = []
 _subnetPos = ((0, 0, 0), (-14, -14, 0), (-14, 14, 0), (14, 14, 0), (14, -14, 0))
 def genSubnet(kind: SubnetKind):
     obj = new Subnet with name str(kind.name) + str(len(_subnets)),
-            with region CircularRegion(_subnetPos[len(_subnets)], 6),
+            with region CircularRegion(_subnetPos[len(_subnets)], 5),
             with kind kind,
+            with image_map {Image.GATEWAY: (Confidentiality.NONE, Availability.MED), Image.OP_SERVER: (Confidentiality.MED, Availability.MED),
+                Image.LINUX_USER_HOST1: (Confidentiality.NONE, Availability.LOW), Image.LINUX_USER_HOST2: (Confidentiality.NONE, Availability.LOW),
+                Image.WINDOWS_USER_HOST1: (Confidentiality.LOW, Availability.LOW), Image.WINDOWS_USER_HOST2: (Confidentiality.LOW, Availability.LOW),
+                Image.VELOCIRAPTOR_SERVER: (Confidentiality.HI, Availability.NONE), Image.INTERNAL: (Confidentiality.HI, Availability.HI)},
             at _subnetPos[len(_subnets)]
             # TODO image map, likely defined as part of kind
+            # please please plase don't hardcode this...
     _subnets.append((obj, []))
-    return obj
+    return obj, len(_subnets) - 1
 
 _hosts = []
-def genHost(ind: int):
-    subnet, count = _subnets[ind]
-    if subnet.kind.makeOne and not count:
-        img = kind.makeOne
-    else:
-        img = Discrete(subnet.kind.images)
-    # BUG if you don't convert every name to string manually it will try to generate some distribution
-    # that calls str.__radd_ which doesn't exist but there's no fucking traceback so do it right every time
-    # or tear your hair out i guess
-    obj = new Host with name str(subnet.name) + str(len(count)),
-            with subnet subnet,
-            with image img
-    _hosts.append(obj)
-    count.append(obj)
+def genHosts(ind: int, count: int):
+    subnet, ls = _subnets[ind]
+    for x, y in calcPoints(count, 5):
+        if subnet.kind.makeOne and not ls:
+            img = subnet.kind.makeOne
+        else:
+            img = Discrete(subnet.kind.images)
+        # BUG if you don't convert every name to string manually it will try to generate some distribution
+        # that calls str.__radd_ which doesn't exist but there's no fucking traceback so do it right every time
+        # or tear your hair out i guess
+        obj = new Host with name str(subnet.name) + str(len(ls)),
+                with subnet subnet,
+                with image img,
+                at (subnet.position.x + x, subnet.position.y + y, subnet.position.z + 0.75)
+        _hosts.append(obj)
+        ls.append(obj)
     return obj
 
 class Link(CybORGLink):
@@ -100,11 +105,15 @@ def genLinks():
             p1 = p1[1][0]
         else:
             p1 = Uniform(*tuple(p1[1]))
-        new Link at p1 offset along angle from p1 to p2 by (0, (distance from p1 to p2) / 2, 0), facing directly toward p2, with p1 p1, with p2 p2, with length distance from p1 to p2
+        new Link at p1 offset along angle from p1 to p2 by (0, (distance from p1 to p2) / 2, 0.25), facing directly toward p2,
+            with p1 p1, with p2 p2, with length distance from p1 to p2
 
 def genAgents(behave):
     greenAgent = new GreenAgent
     defenderSubnet = Uniform(*tuple(map(lambda x: x[0], _subnets)))
-    hostDefender = new Host with name "Defender", with image Image.VELOCIRAPTOR_SERVER, with subnet defenderSubnet
+    hostDefender = new Host with name "Defender", with image Image.VELOCIRAPTOR_SERVER, with subnet defenderSubnet, above defenderSubnet
     blueAgent = new EgoAgent above hostDefender by 0, with behavior behave
-    return blueAgent, greenAgent, hostDefender
+    hostVillain = Uniform(*filter(lambda x: x.image is not Image.GATEWAY and x.image in SubnetKind.USER.images, _hosts))
+    villain = new Agent above hostVillain by 0.75, with behavior behave, with name "Red",
+        with session CybORGSession(hostVillain, "RedAbstractSession", "RedPhish")
+    return blueAgent, greenAgent, hostDefender, villain

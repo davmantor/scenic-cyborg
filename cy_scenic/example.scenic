@@ -6,11 +6,9 @@ from CybORG.Shared.Actions import Sleep
 # since kind.size is an input to a range we can't even uniform the kind
 # what fun
 # i am having fun
-for i in range(5):
-    kind = SubnetKind.USER
+for i, kind in enumerate((SubnetKind.USER, SubnetKind.ENTERPRISE, SubnetKind.OPER, SubnetKind.USER, SubnetKind.OPER)):
     genSubnet(kind)
-    for j in range(kind.size):
-        genHost(i).name
+    genHosts(i, kind.size)
 
 
 genLinks()
@@ -19,5 +17,5 @@ behavior SleepBehaviour():
     while True:
         take ActionWrapper(Sleep)
 
-_ego, green, defender = genAgents(SleepBehaviour)
+_ego, green, defender, villain = genAgents(SleepBehaviour)
 ego = _ego

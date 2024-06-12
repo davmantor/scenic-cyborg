@@ -54,7 +54,7 @@ class CybORGHost(CybORGObject):
     def get_cyborg_obj(self, sim: SimulationController) -> Host:
         return sim.state.hosts[self.cyborg_name]
 
-CybORGSession = namedtuple("CybORGSession", ("username", "hostname", "type", "name"))
+CybORGSession = namedtuple("CybORGSession", ("hostname", "type", "name"))
 
 # There's technically nothing stopping us from having other agents that have multiple host sessions
 # but in practice only blue will use that feature
@@ -69,8 +69,6 @@ class CybORGAgent(CybORGObject):
             properties["actions"] = [BlueActions.SLEEP]
         if "reward" not in properties:
             properties["reward"] = RewardCalculator.NONE
-        if "subnets" not in properties:
-            properties["subnets"] = []
         super().__init__(properties, *args, **kwargs)
 
     def get_cyborg_obj(self, sim: SimulationController) -> Entity:
