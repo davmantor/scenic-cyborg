@@ -55,17 +55,12 @@ _subnets = []
 # TODO write more or (better) make a generator
 # assuming a radius of 4, leave a distance of 2 between each circle
 _subnetPos = ((0, 0, 0), (-14, -14, 0), (-14, 14, 0), (14, 14, 0), (14, -14, 0))
-def genSubnet(kind: SubnetKind):
+def genSubnet(kind: SubnetKind, image_map: dict[Image, tuple[Confidentiality, Availability]]):
     obj = new Subnet with name str(kind.name) + str(len(_subnets)),
             with region CircularRegion(_subnetPos[len(_subnets)], 5),
             with kind kind,
-            with image_map {Image.GATEWAY: (Confidentiality.NONE, Availability.MED), Image.OP_SERVER: (Confidentiality.MED, Availability.MED),
-                Image.LINUX_USER_HOST1: (Confidentiality.NONE, Availability.LOW), Image.LINUX_USER_HOST2: (Confidentiality.NONE, Availability.LOW),
-                Image.WINDOWS_USER_HOST1: (Confidentiality.LOW, Availability.LOW), Image.WINDOWS_USER_HOST2: (Confidentiality.LOW, Availability.LOW),
-                Image.VELOCIRAPTOR_SERVER: (Confidentiality.HI, Availability.NONE), Image.INTERNAL: (Confidentiality.HI, Availability.HI)},
+            with image_map image_map,
             at _subnetPos[len(_subnets)]
-            # TODO image map, likely defined as part of kind
-            # please please plase don't hardcode this...
     _subnets.append((obj, []))
     return obj, len(_subnets) - 1
 
@@ -95,7 +90,14 @@ class Link(CybORGLink):
     width: 0.1
     height: 0.004
 
-def genLinks():
+_links = []
+def genLink(p1: Host, p2: Host):
+    link = new Link at p1 offset along angle from p1 to p2 by (0, (distance from p1 to p2) / 2, 0.25),
+        facing directly toward p2, with p1 p1, with p2 p2, with length distance from p1 to p2
+    _links.append(link)
+    return link
+
+def genRandomLinks():
     tolink = _subnets.copy()
     while len(tolink) > 1:
         p1 = tolink[-1]
@@ -105,15 +107,13 @@ def genLinks():
             p1 = p1[1][0]
         else:
             p1 = Uniform(*tuple(p1[1]))
-        new Link at p1 offset along angle from p1 to p2 by (0, (distance from p1 to p2) / 2, 0.25), facing directly toward p2,
-            with p1 p1, with p2 p2, with length distance from p1 to p2
+        genLink(p1, p2)
 
-def genAgents(behave):
-    greenAgent = new GreenAgent
-    defenderSubnet = Uniform(*tuple(map(lambda x: x[0], _subnets)))
-    hostDefender = new Host with name "Defender", with image Image.VELOCIRAPTOR_SERVER, with subnet defenderSubnet, above defenderSubnet
-    blueAgent = new EgoAgent above hostDefender by 0, with behavior behave
-    hostVillain = Uniform(*filter(lambda x: x.image is not Image.GATEWAY and x.image in SubnetKind.USER.images, _hosts))
-    villain = new Agent above hostVillain by 0.75, with behavior behave, with name "Red",
-        with session CybORGSession(hostVillain, "RedAbstractSession", "RedPhish")
-    return blueAgent, greenAgent, hostDefender, villain
+def getHosts():
+    return _hosts.copy()
+
+def getSubnets():
+    return list(map(lambda x: x[0], _subnets))
+
+# TODO require that all subnets are reachable from each other
+# a simple DFS from subnet 0 will do

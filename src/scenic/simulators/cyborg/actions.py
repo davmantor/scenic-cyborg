@@ -37,9 +37,7 @@ class ActionWrapper(Action):
 
     def applyTo(self, agent, simulation: CybORGSimulation):
         # Agents are objects that have a behavior attached, so this *should be* safe
-        if "agent" in self.action_args:
-            self.action_args["agent"] = agent.cyborg_name
-        simulation.queue_action(agent, self.action_cls(**self.action_args))
+        simulation.queue_action(agent, self.action_cls(agent = agent.cyborg_name, **self.action_args))
 
 # This is here so that this file is less lonely
 # Casually stolen from myself at https://github.com/jlortiz0/VBird/blob/master/backend/Circle.py

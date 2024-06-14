@@ -141,12 +141,12 @@ class CybORGSimulation(Simulation):
         self.controller.reset()
 
     def queue_action(self, agent, action):
-        # ffs do not call this twice in a behavior
-        # goodbye marl support i guess
-        self.controller.step("Blue", action)
+        # BUG this bypasses action space checks
+        self.controller.execute_action(action)
 
     def step(self):
-        pass
+        # BUG: if the action is sleep this will not properly update the observation for the blue agent
+        self.controller.step()
 
     def currentState(self):
         return (self.controller.get_true_state({k: {"Sessions": "All"} for k in self.controller.state.hosts.keys()}), self.controller.get_last_observation("Blue"))
